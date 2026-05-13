@@ -1,318 +1,116 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MP3再生リスト（ページネーション上下表示）</title>
-    <style>
-        body {
-            font-family: "Hiragino Kaku Gothic Pro", "Noto Sans JP", sans-serif;
-            padding: 20px;
-            margin: 0;
-            line-height: 1.6;
-            color: #333;
-        }
-        h2 {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .center-text {
-            text-align: center;
-            margin-bottom: 15px;
-        }
-        .container {
-            border: 1px solid #ccc;
-            padding: 10px;
-            margin-bottom: 20px;
-            border-radius: 8px;
-        }
-        .mp3-item {
-            margin-bottom: 20px;
-            padding: 15px;
-            border-bottom: 1px solid #eee;
-            display: flex;
-            align-items: center;
-            background: #fff;
-        }
-        .mp3-content {
-            flex-grow: 1;
-        }
-        .mp3-item h3 {
-            font-size: 16px;
-            margin: 0 0 10px 0;
-        }
-        audio {
-            width: 100%;
-        }
-        .status {
-            color: #d9534f;
-            font-weight: bold;
-            margin-top: 5px;
-            font-size: 14px;
-        }
-        /* お気に入りスタイル */
-        .favorite-box {
-            margin-left: 15px;
-        }
-        .favorite-box label {
-            cursor: pointer;
-            font-size: 28px;
-        }
-        .favorite-box input[type="checkbox"] + label:before {
-            content: '☆';
-            color: #ccc;
-        }
-        .favorite-box input[type="checkbox"]:checked + label:before {
-            content: '★';
-            color: #f1c40f;
-        }
-        .favorite-box input[type="checkbox"] {
-            display: none;
-        }
-        /* ページネーション */
-        .pagination {
-            text-align: center;
-            padding: 10px 0;
-            overflow-x: auto;
-            white-space: nowrap;
-            margin-bottom: 15px;
-        }
-        .pagination button {
-            background-color: #f8f9fa;
-            border: 1px solid #ccc;
-            padding: 8px 14px;
-            margin: 0 2px;
-            cursor: pointer;
-            font-weight: bold;
-            color: #000;
-            border-radius: 4px;
-        }
-        .pagination button:hover:not(.active) {
-            background-color: #e2e6ea;
-        }
-        .pagination button.active {
-            background-color: #007bff;
-            color: white;
-            border-color: #007bff;
-        }
-        .info-image {
-            display: block;
-            margin: 20px auto;
-            max-width: 100%;
-            height: auto;
-        }
-        .footer-section {
-            text-align: center;
-            margin-top: 40px;
-            padding-top: 20px;
-            border-top: 2px solid #eee;
-        }
-    </style>
-</head>
-<body>
+<!-- 全体を囲むコンテナを追加 -->
+<div class="main-container">
 
-<img src="https://life-supporter.jp/sp/hxySQ4ff/ct5NJq8Z/images/XS012099.jpg" class="info-image">
-
-<h2>再生するまでの準備時間があります。少しお待ちください。</h2>
-<div class="center-text">３００曲の内の１５曲を選んでみました。</div>
-
-<h2 id="mainTitle">MP3再生リスト</h2>
-
-<div class="pagination top" id="paginationControlsTop"></div>
-<div class="center-text"><small>上部をスライドしてリストを選択してください。</small></div>
-
-<div class="container" id="mp3Container"></div>
-
-<div class="pagination bottom" id="paginationControlsBottom"></div>
-<div class="center-text"><small>スライドしてページを切り替えられます。</small></div>
-
-<script>
-    const mp3Data = [
-        ["軽快でお洒落な電子ピアノのテクノポップス", "103.mp3"],
-        ["ゆったりとしたオーケストラ楽曲", "105.mp3"],
-        ["美しいピアノメロディー", "117.mp3"],
-        ["落ち着いた雰囲気の大人なジャズ", "127.mp3"],
-        ["神秘的で温もりのある美しいヒーリング", "146.mp3"],
-        ["切なく美しいバイオリンピアノサウンド", "158.mp3"],
-        ["バイオリンクラシック", "168.mp3"],
-        ["水辺にいるようなヒーリング系ストリングス", "177.mp3"],
-        ["お洒落なピアノシンセ", "187.mp3"],
-        ["壮大で可愛らしいミュージック", "197.mp3"],
-        ["大人な雰囲気のスロージャズバラード", "210.mp3"],
-        ["キュートでかわいいメロディのポップス", "222.mp3"],
-        ["スウィートでウォームなバラード", "235.mp3"],
-        ["上品 おしゃれ ムード 穏やか 大人", "251.mp3"],
-        ["苦悩をこえて、愛がかなう。ラストシーン", "399.mp3"]
-    ];
-
-    const baseUrl = "https://life-supporter.jp/sp/hxySQ4ff/VjDWurLR/images/MP3/";
-    const mainTitle = document.getElementById("mainTitle");
-    const container = document.getElementById("mp3Container");
-    const paginationControlsTop = document.getElementById("paginationControlsTop");
-    const paginationControlsBottom = document.getElementById("paginationControlsBottom");
-    const FAVORITES_KEY = "mp3Favorites";
-
-    const ITEMS_PER_PAGE = 5;
-    const TOTAL_PAGES = Math.ceil(mp3Data.length / ITEMS_PER_PAGE);
-    let currentPage = 1;
-
-    function loadFavorites() {
-        try {
-            const stored = localStorage.getItem(FAVORITES_KEY);
-            return stored ? JSON.parse(stored) : {};
-        } catch (e) { return {}; }
-    }
-
-    function saveFavorites(favorites) {
-        try {
-            localStorage.setItem(FAVORITES_KEY, JSON.stringify(favorites));
-        } catch (e) { console.error(e); }
-    }
-
-    let favorites = loadFavorites();
-
-    function handlePlayAttempt(audioElement, statusElement) {
-        if (audioElement.readyState >= 4) {
-            audioElement.play().catch(e => {});
-            statusElement.textContent = '';
-            return;
-        }
-        statusElement.textContent = '⌛ 準備中...';
-        audioElement.controls = false;
-        
-        const canplaythroughHandler = () => {
-            statusElement.textContent = '✅ 再生準備完了';
-            audioElement.controls = true;
-            audioElement.removeEventListener('canplaythrough', canplaythroughHandler);
-            audioElement.play().catch(e => {
-                statusElement.textContent = '✅ 再生準備完了 (再生ボタンを押してください)';
-            });
-        };
-        audioElement.addEventListener('canplaythrough', canplaythroughHandler);
-        audioElement.load();
-    }
-
-    function displayList(page) {
-        container.innerHTML = '';
-        const start = (page - 1) * ITEMS_PER_PAGE;
-        const end = start + ITEMS_PER_PAGE;
-        const pageData = mp3Data.slice(start, end);
-
-        pageData.forEach(([title, filename], index) => {
-            const item = document.createElement("div");
-            item.className = "mp3-item";
-            
-            const contentDiv = document.createElement("div");
-            contentDiv.className = "mp3-content";
-
-            const titleElem = document.createElement("h3");
-            titleElem.textContent = `${start + index + 1}. ${title}`;
-
-            const audio = document.createElement("audio");
-            audio.controls = true;
-            audio.setAttribute('controlsList', 'nodownload');
-            audio.oncontextmenu = () => false;
-            
-            const source = document.createElement("source");
-            source.src = baseUrl + filename;
-            source.type = "audio/mpeg";
-            audio.appendChild(source);
-            
-            const statusDiv = document.createElement("div");
-            statusDiv.className = "status";
-            
-            audio.addEventListener('play', (e) => {
-                document.querySelectorAll('audio').forEach(a => {
-                    if (a !== audio && !a.paused) a.pause();
-                });
-                handlePlayAttempt(audio, statusDiv);
-            });
-
-            contentDiv.appendChild(titleElem);
-            contentDiv.appendChild(audio);
-            contentDiv.appendChild(statusDiv);
-
-            const favoriteBox = document.createElement("div");
-            favoriteBox.className = "favorite-box";
-            const checkboxId = `fav-${start + index}`;
-            const checkbox = document.createElement("input");
-            checkbox.type = "checkbox";
-            checkbox.id = checkboxId;
-            checkbox.checked = favorites[filename] || false;
-
-            const label = document.createElement("label");
-            label.htmlFor = checkboxId;
-
-            checkbox.addEventListener('change', (e) => {
-                favorites[filename] = e.target.checked;
-                saveFavorites(favorites);
-            });
-
-            favoriteBox.appendChild(checkbox);
-            favoriteBox.appendChild(label);
-            item.appendChild(contentDiv);
-            item.appendChild(favoriteBox);
-            container.appendChild(item);
-        });
-        
-        renderPaginationControls(page, paginationControlsTop);
-        renderPaginationControls(page, paginationControlsBottom);
-    }
-
-    function renderPaginationControls(activePage, targetElement) {
-        targetElement.innerHTML = '';
-        const prevButton = document.createElement('button');
-        prevButton.textContent = '≪ 前へ';
-        prevButton.disabled = activePage === 1;
-        prevButton.onclick = () => changePage(activePage - 1);
-        targetElement.appendChild(prevButton);
-
-        for (let i = 1; i <= TOTAL_PAGES; i++) {
-            const button = document.createElement('button');
-            button.textContent = i;
-            if (i === activePage) button.classList.add('active');
-            button.onclick = () => changePage(i);
-            targetElement.appendChild(button);
-        }
-
-        const nextButton = document.createElement('button');
-        nextButton.textContent = '次へ ≫';
-        nextButton.disabled = activePage === TOTAL_PAGES;
-        nextButton.onclick = () => changePage(activePage + 1);
-        targetElement.appendChild(nextButton);
-    }
-
-    function changePage(page) {
-        if (page >= 1 && page <= TOTAL_PAGES) {
-            currentPage = page;
-            displayList(currentPage);
-            mainTitle.scrollIntoView({ behavior: 'smooth' });
-        }
-    }
-
-    displayList(currentPage);
-</script>
-
-<div class="footer-section">
-    <p><b>今回のアプリは如何だったでしょうか？<br>
-    他にも使えるアプリ、脳トレができるゲームや趣味に俳句、和歌などが利用できるサイトをご案内します。</b></p>
-    <p><b>また大事な記録をサーバーに残せるサイトで、何かあった時に情報開示も指定できるサイトです。<br>
-    スマホのID、PWを記録しておくと安心です。</b></p>
-
-    <img src="https://life-supporter.jp/sp/hxySQ4ff/ct5NJq8Z/images/XS012085.jpg" class="info-image">
-
-    <div style="font-size: 24px; font-weight: bold; margin: 20px 0;">
-        以下より体験版をご確認ください。
-    </div>
-
-    <img src="https://life-supporter.jp/sp/hxySQ4ff/ct5NJq8Z/images/XS012100.jpg" style="width: 200px;">
+    <p style="text-align: center;"><br></p>
+    <p id="idqd"><span id="i6qf">終活・エンディングノートに関する</span><br></p>
+    <p id="ijuq"><span id="ilfu2">さまざまなセミナーを開催しています</span></p>
     
-    <div style="margin-top: 10px;">
-        <a href="https://life-supporter.jp/lp/HRSuykFf" style="font-size: 20px; color: #007bff; text-decoration: none; font-weight: bold;">
-            https://life-supporter.jp/lp/HRSuykFf
-        </a>
+    <!-- 画像セクション（レスポンシブ対応） -->
+    <p id="ixs8p" class="img-wrapper">
+        <b><img loading="lazy" src="https://silver-life-supporter.xyz/wp-content/uploads/2018/11/ph_work_03.jpg" alt="セミナー" id="i4js9" class="reImg wow fadeInUp"></b>
+    </p>
+    <p id="i2029" class="modP flexP img-wrapper">
+        <b id="i4pdg"><img loading="lazy" src="https://xn--dckjz4gh9a1tc7f.xyz/wp-content/uploads/2021/03/WS009694.jpg" alt="" width="1200" height="691" id="izy8i" class="alignnone size-full wp-image-3397"></b>
+    </p>
+
+    <p id="id3wi" class="modP flexP text-center"><b id="i896o"><span id="i0all"><u><span id="iz90v">会場 </span></u><u><span id="isqg1">or </span></u><u><span id="ijh4b">ＺＯＯＭセミナー受付中</span></u></span></b></p>
+    
+    <div class="seminar-list">
+        <div><span id="i2ldi"><b>★エンディングノート書き方セミナー</b></span></div>
+        <div><span id="iygsc"><b>★デジタル終活の始め方セミナー</b></span></div>
+        <div><span id="i0dlo"><b>★メルカリ整理整頓セミナー</b></span></div>
+        <div><span id="ikwbi"><b>★認知症予防セミナー</b></span></div>
+        <div><span id="i2w0v"><b>★医療・介護セミナー</b></span></div>
+        <div><span id="i97yu"><b>★家族信託セミナー</b></span></div>
+        <div><span id="ij5zl"><b>★終活セミナー</b></span></div>
+        <div class="note"><b>（開催時間は約60分から90分ほどになります。）</b></div>
     </div>
+
+    <div class="message-section">
+        <p><b>「今は元気だけど、病気になったらどうしよう、そうなったら何をすればいいのだろう、準備できることは、なにか支援を受けられないものか」</b></p>
+        <p><strong>「子供も仕事で遠くにいるしできるだけ面倒はかけたくない、妻が（夫が）介護が必要になったら自分だけで世話ができるだろうか、自分が死んだら誰が何の手続きをすればいいんだろう」</strong></p>
+        <p><strong>不安を解消し、安心して人生を過ごす活動を、「終活」と考えています。そうした「終活」の知識を広め、老後や死後の不安を解消することを目的にしています。</strong></p>
+    </div>
+
+    <div class="info-section">
+        <p><b>ご希望の日にちと時間を登録しお申し込みください。</b></p>
+        <p><b>セミナー終了後、アンケートをお願いしています。</b></p>
+        <p class="highlight-pink">ライフサポーターコミュニティ会員様限定のＺＯＯＭセミナー</p>
+        <p><b>5000マイスにて参加できます。<br>以下より申請してください。</b></p>
+        <p><a href="%point_form%" target="_blank" class="btn-link">Zoom会員オンラインセミナー申し込み</a></p>
+    </div>
+
+    <div class="cost-section">
+        <p><b>**********************<br>以下のグループ、施設については、￥5,500円で開催</b></p>
+        <p><b><u>自治会、老人会、社協、行政、介護施設、病院、NPOなど</u> 場所、開催時間に合わせて実施します。</b></p>
+        <p><a href="https://life-supporter.jp/p/r/hHxveHp8" target="_blank" class="btn-link">Zoom公的オンラインセミナー申し込み</a></p>
+        
+        <p class="red-title">【費用について】</p>
+        <p><b>公的以外のセミナーについて</b></p>
+        <p><b>会場セミナー費は、通常￥55,000円（税込）となりますが</b></p>
+        <p><b>ＺＯＯＭオンラインセミナーにつき<br><span class="strike">38,500円（税込）としたいところですが、</span></b></p>
+        <p class="red-bold">多くの人に利用できるように基本27,500円（税込）としました。</p>
+    </div>
+
+    <div class="footer-section">
+        <p class="red-title">【団体・グループの各種セミナー受付中】</p>
+        <p><a href="https://life-supporter.jp/p/r/0svt3bU4" target="_blank" class="btn-link">Zoomオンラインセミナー申し込み</a></p>
+    </div>
+
 </div>
 
-</body>
-</html>
+<style>
+/* 全体のレイアウト設定 */
+.main-container {
+    max-width: 1000px; /* PC最大幅 */
+    margin: 0 auto;    /* 中央寄せ */
+    padding: 10px;
+    box-sizing: border-box;
+    font-family: "Noto Sans JP", sans-serif;
+    line-height: 1.6;
+    color: #333;
+}
+
+/* 画像のレスポンシブ化 */
+.img-wrapper {
+    text-align: center;
+    margin-bottom: 20px;
+}
+.img-wrapper img {
+    max-width: 100%;   /* スマホで横幅に収める */
+    height: auto;      /* 高さを自動調整 */
+}
+
+/* テキスト装飾 */
+#i6qf, #ilfu2 {
+    color: red;
+    font-size: 24px;
+    letter-spacing: 0.1em;
+    display: block;
+    text-align: center;
+}
+.text-center { text-align: center; }
+.red-title { color: red; font-size: 1.2rem; font-weight: bold; margin-top: 20px; }
+.red-bold { color: red; font-size: 1.2rem; font-weight: bold; }
+.highlight-pink { color: #ff00ff; font-size: 18px; font-weight: bold; }
+.btn-link { color: blue; font-size: 18px; text-decoration: underline; }
+
+/* セミナーリスト */
+.seminar-list { margin: 20px 0; text-align: left; padding-left: 10%; }
+.seminar-list .note { font-size: 0.9rem; margin-top: 10px; }
+
+/* スマホ向けの微調整 */
+@media screen and (max-width: 768px) {
+    .main-container {
+        width: 100%;
+        padding: 15px;
+    }
+    #i6qf, #ilfu2 {
+        font-size: 20px;
+    }
+    .seminar-list {
+        padding-left: 0;
+        text-align: center;
+    }
+}
+</style>
