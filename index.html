@@ -62,55 +62,109 @@
 <style>
 /* 全体のレイアウト設定 */
 .main-container {
-    max-width: 1000px; /* PC最大幅 */
-    margin: 0 auto;    /* 中央寄せ */
+    max-width: 1000px;
+    margin: 0 auto;
     padding: 10px;
     box-sizing: border-box;
     font-family: "Noto Sans JP", sans-serif;
-    line-height: 1.6;
+    line-height: 1.8; /* 行間を少し広くして読みやすく */
     color: #333;
+    font-size: 22px;   /* 全体のベース文字サイズを大きく */
 }
 
 /* 画像のレスポンシブ化 */
 .img-wrapper {
     text-align: center;
-    margin-bottom: 20px;
+    margin-bottom: 30px;
 }
 .img-wrapper img {
-    max-width: 100%;   /* スマホで横幅に収める */
-    height: auto;      /* 高さを自動調整 */
+    max-width: 100%;
+    height: auto;
 }
 
-/* テキスト装飾 */
+/* 見出しの文字サイズ */
 #i6qf, #ilfu2 {
     color: red;
-    font-size: 24px;
+    font-size: 40px;   /* タイトルをさらに強調 */
+    font-weight: bold;
     letter-spacing: 0.1em;
     display: block;
     text-align: center;
+    line-height: 1.3;
+    margin-bottom: 10px;
 }
+
+#i0all {
+    font-size: 32px;   /* 「ZOOMセミナー受付中」を大きく */
+}
+
+.red-title { 
+    color: red; 
+    font-size: 32px; 
+    font-weight: bold; 
+    margin-top: 40px; 
+}
+
+.red-bold { 
+    color: red; 
+    font-size: 32px; 
+    font-weight: bold; 
+}
+
+/* テキスト装飾 */
 .text-center { text-align: center; }
-.red-title { color: red; font-size: 1.2rem; font-weight: bold; margin-top: 20px; }
-.red-bold { color: red; font-size: 1.2rem; font-weight: bold; }
-.highlight-pink { color: #ff00ff; font-size: 18px; font-weight: bold; }
-.btn-link { color: blue; font-size: 18px; text-decoration: underline; }
+.highlight-pink { 
+    color: #ff00ff; 
+    font-size: 28px; 
+    font-weight: bold; 
+    background-color: #f9f9f9;
+    display: inline-block;
+    padding: 5px 10px;
+}
+
+.btn-link { 
+    color: blue; 
+    font-size: 30px; 
+    font-weight: bold;
+    text-decoration: underline; 
+    display: inline-block;
+    margin: 10px 0;
+}
+
+.strike { text-decoration: line-through; color: #666; font-size: 0.8em; }
 
 /* セミナーリスト */
-.seminar-list { margin: 20px 0; text-align: left; padding-left: 10%; }
-.seminar-list .note { font-size: 0.9rem; margin-top: 10px; }
+.seminar-list { 
+    margin: 30px 0; 
+    text-align: left; 
+    padding-left: 15%; 
+}
+.seminar-list div { margin-bottom: 10px; }
+.seminar-list .note { font-size: 18px; margin-top: 15px; color: #555; }
+
+/* 各セクションの余白調整 */
+.message-section, .info-section, .cost-section, .footer-section {
+    margin-bottom: 40px;
+}
 
 /* スマホ向けの微調整 */
 @media screen and (max-width: 768px) {
     .main-container {
         width: 100%;
         padding: 15px;
+        font-size: 18px; /* スマホでは少し抑えめに（それでも通常より大きい） */
     }
     #i6qf, #ilfu2 {
-        font-size: 20px;
+        font-size: 28px;
+    }
+    #i0all, .red-title, .red-bold {
+        font-size: 24px;
+    }
+    .btn-link {
+        font-size: 22px;
     }
     .seminar-list {
-        padding-left: 0;
-        text-align: center;
+        padding-left: 5%;
     }
 }
 </style>
